@@ -1,2 +1,7 @@
 .DS_Store
 *.pyc
+speech.wav
+text.txt
+lipoutput.txt
+key.env
+config.py
