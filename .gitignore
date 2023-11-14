@@ -1,4 +1,8 @@
 .DS_Store
 *.pyc
-
 testing
+speech.wav
+text.txt
+lipoutput.txt
+key.env
+config.py
