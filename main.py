@@ -10,7 +10,7 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
 
-    tts = Sound ()
+    tts = Sound()
     # tts.try_speak("What do you think about Xjasdlkfjg")
     # time.sleep(10)
     # status = sd.wait()
