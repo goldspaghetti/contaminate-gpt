@@ -5,6 +5,7 @@ from PyQt6.QtGui import QIcon, QPainter, QColor, QPixmap, QPen, QBrush, QLinearG
 from PyQt6.QtCore import Qt, QSize, QRect, QPointF, QRectF, QEvent, QTimer
 
 from functools import partial
+from random import randint
 
 def clamp(n, l, h): 
     return max(l, min(n, h))
@@ -14,6 +15,9 @@ class Timer(QLabel):
         super().__init__("0:00")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.min = 3
+        self.sec = 0
 
         self.setStyleSheet("""
             QWidget {
@@ -25,16 +29,28 @@ class Timer(QLabel):
             }
         """)
 
-                # background: rgb(10,10,10);
-                # border-radius: 10px;
-                # font-size: 24px;
-                # font-weight: 700;
-                # padding: 10px;
+    def __update_time(self):
+        self.setText(f"{self.min:02}:{self.sec:02}")
+
+    def set_time(self, min, sec):
+        self.min = min
+        self.sec = sec
+
+        self.__update_time()
+
+    def decrement_time(self):
+        if self.sec == 0:
+            self.min -= 1
+            self.sec = 59
+        else:
+            self.sec -= 1
+
+        self.__update_time()
 
 class Health(QProgressBar):
     def __init__(self):
         super().__init__()
-        self.setValue(10)
+        self.setValue(100)
 #                 background: rgb(19, 70, 158);
 #                 background: rgb(145, 25, 12);
         self.setStyleSheet("""
@@ -52,17 +68,22 @@ class Health(QProgressBar):
                 border-radius: 10px;
             }
         """)
-        ## save: 8, 57, 140
-#                 background: rgb(180,10,10);
+
+    def decrease_health(self, percentage):
+        self.setValue(self.value() - percentage)
+
 class TopBar(QWidget):
     def __init__(self):
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
+        self.timer = Timer()
+        self.health = Health()
+
         self.layout = QHBoxLayout()
-        self.layout.addWidget(Timer())
+        self.layout.addWidget(self.timer)
         self.layout.addStretch()
-        self.layout.addWidget(Health())
+        self.layout.addWidget(self.health)
         # self.layout.addStretch()
 
         self.setLayout(self.layout)
@@ -124,7 +145,7 @@ class SideBar(QWidget):
         # self.layout.setAlignment(Qt.AlignmentFlag)
         from random import randint
         for _ in range(3):
-            item = Item(f"belt{randint(2,6)}.jpeg", 100)
+            item = Item(f"belt{randint(2,6)}.jpeg", randint(10,30))
             self.layout.addWidget(item)
 
             item.clicked.connect(partial(self.item_event, item))
@@ -142,7 +163,6 @@ class SideBar(QWidget):
         self.setLayout(self.layout)
         # ok = Box()
         # ok.show()
-        print("idiot")
         # ok.move(100,100)
 
         # self.setFixedHeight(140)
@@ -154,10 +174,17 @@ class SideBar(QWidget):
         # """)
 
     def item_event(self, item):
-        self.parent.current_image = item.path
-        print(self.parent.current_image)
+        if self.parent.active_path:
+            return
+
+        # self.parent.current_image = item.path
+        self.parent.active_path = item.path
+        self.parent.active_damage = item.damage
+        # print(self.parent.current_image)
         # x = QPushButton()
         item.setVisible(False)
+
+        self.parent.repaint()
         # print(c.icon().pixmap(c.icon().availableSizes()[0]).toImage().text("FilePath"))
         # self.parent 
 
@@ -181,10 +208,14 @@ class MainWindow(QMainWindow):
             }
         """)
 
+        self.active_path = None
+        self.active_damage = 0
+        self.splats = []
+
         self.x = 1000
         self.y = 1000
 
-        self.current_image = None
+        # self.current_image = None
 
         self.top_bar = TopBar()
         self.side_bar = SideBar(self)
@@ -214,6 +245,10 @@ class MainWindow(QMainWindow):
         self.frame.setLayout(self.frame.layout)
         self.setCentralWidget(self.frame)
 
+        self.t = QTimer()
+        self.t.timeout.connect(self.timer_thread)
+        self.t.start(1000)
+
         # x = QTimer()
         # x.thread = self.repaint
         # x.start(100)
@@ -224,6 +259,9 @@ class MainWindow(QMainWindow):
 
     # def __calc_rect_from_center(x, y, w, h):
     #     retu
+
+    def timer_thread(self):
+        self.top_bar.timer.decrement_time()
 
 
 
@@ -243,19 +281,27 @@ class MainWindow(QMainWindow):
         painter.drawEllipse(QPointF(550+offset_x, 310+offset_y), 20, 20)
         painter.drawEllipse(QPointF(650+offset_x, 310+offset_y), 20, 20)
 
-        pen = QPen(QColor(100, 100, 100), 4)
-        painter.setBrush(Qt.GlobalColor.transparent)
-        painter.setPen(pen)
+        painter.setBrush(QColor(100, 200, 100, 80))
+        for splat in self.splats:
+            painter.drawEllipse(QPointF(splat[0], splat[1]), splat[2], splat[2])
 
-        start_point = QPointF(950, 550)
-        end_point = QPointF(self.x, self.y)
-        control_point = QPointF((start_point.x() + end_point.x()) / 2 + 100, (start_point.y() + end_point.y()) / 2 - 100)
-        
-        path = QPainterPath()
-        path.moveTo(start_point)
-        path.cubicTo(start_point, control_point, end_point)
+        if self.active_path:
+            image = QImage(self.active_path).scaled(100,100)
+            painter.drawImage(QPointF(900, 50), image)
 
-        painter.drawPath(path)
+            pen = QPen(QColor(100, 100, 100, 80), 10)
+            painter.setBrush(Qt.GlobalColor.transparent)
+            painter.setPen(pen)
+
+            start_point = QPointF(950, 550)
+            end_point = QPointF(self.x, self.y)
+            control_point = QPointF((start_point.x() + end_point.x()) / 2 + 100, (start_point.y() + end_point.y()) / 2 - 100)
+            
+            path = QPainterPath()
+            path.moveTo(start_point)
+            path.cubicTo(start_point, control_point, end_point)
+
+            painter.drawPath(path)
 
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(20,20,20))
@@ -268,6 +314,16 @@ class MainWindow(QMainWindow):
         painter.drawImage(QPointF(900, 500), image)
 
         painter.end()
+
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key.Key_M and self.active_path:
+            self.top_bar.health.decrease_health(self.active_damage)
+
+            self.splats.append((self.x, self.y, self.active_damage))
+            self.active_path = None
+            self.active_damage = 0
+            self.repaint()
+            
 
     # def mouse
     # def mouse(self, e):
@@ -283,9 +339,10 @@ class MainWindow(QMainWindow):
     #     return QMainWindow.eventFilter(self, a, e)
 
     def mouseMoveEvent(self, e):
-        self.x = e.pos().x()
-        self.y = e.pos().y()
-        self.repaint()
+        if self.active_path:
+            self.x = e.pos().x()
+            self.y = e.pos().y()
+            self.repaint()
         # print(e.pos().x(), e.pos().y())
 
     # def mouseReleaseEvent(self, e):
