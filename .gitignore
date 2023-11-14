@@ -4,7 +4,7 @@ speech.wav
 text.txt
 lipoutput.txt
 key.env
-config.py.DS_Store
+config.py
 *.pyc
 
 testing
