@@ -228,36 +228,10 @@ class MainWindow(QMainWindow):
 
 
     def paintEvent(self, e):
-        print("run")
         painter = QPainter()
         painter.begin(self)
+
         painter.setPen(Qt.PenStyle.NoPen)
-
-        # painter.setBrush(QColor("white"))
-        # painter.drawRect(0, 0, 1000, 500)
-
-        # gradient = QLinearGradient(300, 300, 500, 500)
-        # gradient.setColorAt(0, QColor(100, 20, 20))
-        # gradient.setColorAt(1, QColor(70, 15, 15))
-
-        # painter.setBrush(gradient)
-        # painter.drawRoundedRect(QRectF(400, 200, 200, 200), 20, 20)
-
-        # painter.setBrush(QColor("black"))
-        # painter.drawRoundedRect(QRectF(425, 225, 150, 150), 10, 10)
-        # painter.setBrush(QColor("lightgray"))
-        # painter.drawEllipse(QPointF(500, 300), 40, 40)
-        # painter.setBrush(QColor(140,20,20))
-        # painter.drawEllipse(QPointF(490, 300), 15, 15)
-
-        # from PIL import Image
-        # from PIL.ImageQt import ImageQt
-        # image2 = Image.open('belt.jpeg')
-        # qimage = ImageQt(image2)
-
-        # # x = QPixmap.fromImage("belt.jpeg")
-
-
 
         image = QImage("robot-3.png").scaled(450,450)
         painter.drawImage(QPointF(375, 200), image)
@@ -268,19 +242,12 @@ class MainWindow(QMainWindow):
         painter.setBrush(QColor("lightgray"))
         painter.drawEllipse(QPointF(550+offset_x, 310+offset_y), 20, 20)
         painter.drawEllipse(QPointF(650+offset_x, 310+offset_y), 20, 20)
-        # painter.setBrush(QColor(140,20,20))
-        # painter.drawEllipse(QPointF(490, 300), 15, 15)
 
-
-
-
-        # painter.setBrush(QColor("black"))
-        pen = QPen(QColor(100, 100, 100), 4)  # Set color to blue and thickness to 2
+        pen = QPen(QColor(100, 100, 100), 4)
         painter.setBrush(Qt.GlobalColor.transparent)
         painter.setPen(pen)
 
-        # Define the starting and ending points of the curved line
-        start_point = QPointF(900, 500)
+        start_point = QPointF(950, 550)
         end_point = QPointF(self.x, self.y)
         control_point = QPointF((start_point.x() + end_point.x()) / 2 + 100, (start_point.y() + end_point.y()) / 2 - 100)
         
@@ -288,53 +255,17 @@ class MainWindow(QMainWindow):
         path.moveTo(start_point)
         path.cubicTo(start_point, control_point, end_point)
 
-        # Draw the curved line
         painter.drawPath(path)
 
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(20,20,20))
         painter.drawRect(0, 0, 160, 600)
-        # x = QPixmap("belt6.jpeg")
-        # b = QBrush(x)
+
         painter.setBrush(QBrush(QPixmap("belt9.png")))
         painter.drawRect(0, 0, 140, 600)
 
-        # angle = 90
-        # painter.translate(1000, 450) #400, 200
-        # painter.rotate(angle)
-        # image = QImage("cannon-2.png").scaled(200,200)
-        # painter.drawImage(QPointF(0,0), image)
-
         image = QImage("cannon.png").scaled(200,200)
         painter.drawImage(QPointF(900, 500), image)
-
-        # painter.setPen(QPen(QColor("lightgray"), 10))
-        # painter.drawLine(600, 600, self.x, self.y)
-        
-        # x = QPixmap.fromImage(qimage)
-        # painter.setBrush(x)
-        # x = QPixmap("belt3.jpeg")
-        # b = QBrush(x)
-        # painter.setBrush(b)
-        # # x = QPixmap.fromImage(qimage)
-        # # painter.setBrush(x)
-        # painter.fillRect(0, 550, 1500, 50, b)
-
-        # painter.setBrush(QColor(100,100,100))
-        # painter.drawRect(0, 520, 1000, 80)
-
-        # painter.setBrush(QColor(50,50,50))
-        # for i in range(0, 1000, 50):
-        #     print(i)
-        #     # painter.setBrush(QColor(140,140,140))
-        #     painter.drawRect(i, 520, 25, 80)
-
-        # painter.setBrush(QColor(100,100,200,50))
-        # painter.drawEllipse(QPointF(500, 300), 150, 150)
-
-        # painter.setBrush(QColor("white"))
-        # painter.drawEllipse(QPointF(self.x, self.y), 6, 6)
-        # painter.drawPixmap(QRect(550, 110, 320, 180), QPixmap("okok.gif"))
 
         painter.end()
 

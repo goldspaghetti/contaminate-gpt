@@ -14,6 +14,7 @@ if __name__ == "__main__":
     # time.sleep(10)
     # status = sd.wait()
     # sd.stop()
-    tts.gpt("i threw a moldy cheese to you, dealing 20%")
+    resp = tts.gpt("i threw a moldy cheese to you, dealing 20%")
+    tts.try_speak(resp)
 
     app.exec()
