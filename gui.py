@@ -11,6 +11,7 @@ from random import randint
 import time
 
 import threading
+import os
 
 def clamp(n, l, h): 
     return max(l, min(n, h))
@@ -148,9 +149,10 @@ class SideBar(QWidget):
         self.parent = parent
         self.layout = QVBoxLayout()
         # self.layout.setAlignment(Qt.AlignmentFlag)
-        from random import randint
-        for _ in range(3):
-            item = Item(f"belt{randint(2,6)}.jpeg", randint(10,30))
+
+        for path in os.listdir('images'):
+            print(path)
+            item = Item(f"images/{path}", randint(10,30))
             self.layout.addWidget(item)
 
             item.clicked.connect(partial(self.item_event, item))
@@ -375,7 +377,7 @@ class MainWindow(QMainWindow):
 
         painter.setBrush(QColor(100, 200, 100, 80))
         for splat in self.splats:
-            painter.drawEllipse(QPointF(splat[0], splat[1]), splat[2], splat[2])
+            painter.drawEllipse(QPointF(splat[0], splat[1]), splat[2]*2, splat[2]*2)
 
         if self.active_path:
             image = QImage(self.active_path).scaled(100,100)
