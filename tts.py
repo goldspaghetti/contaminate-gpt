@@ -14,14 +14,17 @@ from PyQt6.QtCore import QUrl
 import sys
 from PyQt6.QtGui import QGuiApplication
 
+from pygame import mixer
+
 # openai.api_key = OPEN_AI_KEY
 class Sound():
     # curr_playing = False
     audio = []
-    def __init__(self, save_audio=True, save_text=True, volume=1):
+    def __init__(self, lip_queue=None, save_audio=True, save_text=True, volume=1):
         # x = torch.rand(5, 3)
         # print(x)
         # print(torch.cuda.is_available())
+        self.lip_queue = lip_queue
 
         self.tts = TTS("tts_models/en/ljspeech/vits", gpu=False)
         # tts_models/en/vctk/vits"
@@ -42,14 +45,19 @@ class Sound():
 
         # self.audio_device = sd.default.device[1]
         # self.music = sf.read("game_jam3.wav", dtype="float32")
-        # QMediaPlayer.
-        self.audio_device = QAudioOutput()
-        self.music = QMediaPlayer()
-        self.music.setAudioOutput(self.audio_device)
-        self.music.setSource(QUrl.fromLocalFile("game_jam3.wav"))
-        self.music.setLoops(-2)
-        self.music.play()
-        self.voice = QSoundEffect()
+        
+
+        # self.audio_device = QAudioOutput()
+        # self.music = QMediaPlayer()
+        # self.music.setAudioOutput(self.audio_device)
+        # self.music.setSource(QUrl.fromLocalFile("game_jam3.wav"))
+        # self.music.setLoops(-2)
+        # self.music.play()
+        # self.voice = QSoundEffect()
+        mixer.init()
+        mixer.music.load("game_jam3.wav")
+        mixer.music.play(loops=-1)
+
         # sd.play(self.music[0]*self.volume, samplerate=44100, loop=True)
 
         fish_thread = threading.Thread(target=self.try_speak_loop, daemon=True)
@@ -127,16 +135,20 @@ class Sound():
             f.write(prompt)
         
         print(self.lipsync.get_features())
+        self.lip_queue.put(self.lipsync.get_features())
         # send info to change facial features
 
         # sd.play(tts_speak[0]*self.volume, 22050)
-        self.voice.setSource(QUrl.fromLocalFile("speech.wav"))
-        print("before play")
-        self.voice.play()
-        while self.voice.isPlaying():
-            time.sleep(0.1)
-        print("played")
+        # self.voice.setSource(QUrl.fromLocalFile("speech.wav"))
+        # print("before play")
+        # self.voice.play()
+        # while self.voice.isPlaying():
+        #     time.sleep(0.1)
+        # print("played")
 
+        voice = mixer.Sound("speech.wav")
+        voice.play()
+        time.sleep(0)
         self.last_speak = time.time()
         self.curr_playing = False
         # array = self.nightcore(array, 22050)

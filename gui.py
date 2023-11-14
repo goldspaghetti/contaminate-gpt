@@ -1,11 +1,16 @@
 import typing
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QScrollArea, QLabel, QProgressBar, QPushButton, QSizePolicy
-from PyQt6.QtGui import QIcon, QPainter, QColor, QPixmap, QPen, QBrush, QLinearGradient, QImage, QPainterPath
-from PyQt6.QtCore import Qt, QSize, QRect, QPointF, QRectF, QEvent, QTimer
+from PyQt6.QtGui import QIcon, QPainter, QColor, QPixmap, QPen, QBrush, QLinearGradient, QImage, QPainterPath, QBitmap
+# from PyQt6.QtCore import Qt, QSize, QRect, QPointF, QRectF, QEvent, QTimer, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import *
+from PySide6.QtCore import Signal, Slot, QObject, QThread
 
 from functools import partial
 from random import randint
+import time
+
+import threading
 
 def clamp(n, l, h): 
     return max(l, min(n, h))
@@ -196,8 +201,77 @@ class SideBar(QWidget):
 #         # self.move(800, 500)
 #         # self.setVisible(True)
 
+# class Communicate(QObject):
+#     speak = Signal(name="repaint")
+#     def __init__(self, parent=None):
+#         super().__init__()
+#         self.speak.connect(self.refresh)
+#         self.parent=parent
+    
+#     @Slot()
+#     def refresh(self):
+#         self.parent.refresh()
+
+class Lip():
+    def __init__(self, event_queue=None):
+        super().__init__()
+        # self.load("lip_x.png")
+        self.event_queue = event_queue
+        self.curr_event = None
+        self.last_time = 0
+        lip_thread = threading.Thread(target=self.thread_loop, daemon=True)
+        # lip_thread = QThread(target=self.thread_loop, daemon=True)
+        lip_thread.start()
+        self.last_face = "N"
+        # self.img = QImage("lip_X.png")
+        self.img_path = "lip_X.png"
+        repaint_signal = Signal(name="repaint")
+
+        # self.a = QBitmap("lip_A.png")
+        # self.b = QBitmap("lip_B.png")
+        # self.c = QBitmap("lip_C.png")
+        # self.d = QBitmap("lip_D.png")
+        # self.e = QBitmap("lip_E.png")
+        # self.f = QBitmap("lip_F.png")
+        # self.g = QBitmap("lip_G.png")
+        # self.h = QBitmap("lip_H.png")
+        # self.x = QBitmap("lip_x.png")
+
+    
+    def thread_loop(self):
+        while True:
+            self.check_event()
+            self.update_loop()
+            time.sleep(0.05)
+
+    def update_loop(self):
+        if self.curr_event != None:
+            curr_face = "N"
+            for event in self.curr_event:
+                if time.time() - self.last_time < float(event[0]):
+                    curr_face = event[1]
+                    break
+            if curr_face == "N":
+                self.curr_event = None
+                return
+            if curr_face != self.last_face:
+                print(f"change image to {curr_face}, last face {self.last_face}, {curr_face == self.last_face} time: {time.time()-self.last_time}")
+                self.img_path = f"lip_{curr_face}.png"
+                self.last_face = curr_face
+                # self.main_window.repaint()
+                # self.repaint_signal
+                # Communicate.speak.emit()
+                # self.repaint_signal.emit()
+
+    def check_event(self):
+        if not self.event_queue.empty():
+            print("queue not empty")
+            self.curr_event = self.event_queue.get()
+            self.last_time = time.time()
+            self.last_face = "N"
+
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, lip_queue=None, tts=None):
         super().__init__()
         self.setMouseTracking(True)
         self.setFixedSize(1000, 600)
@@ -245,9 +319,23 @@ class MainWindow(QMainWindow):
         self.frame.setLayout(self.frame.layout)
         self.setCentralWidget(self.frame)
 
+        self.lip = Lip(lip_queue)
+        # self.lip_thread = QThread()
+        # self.lip.moveToThread(self.lip_thread)
+        # self.lip_thread.finished.connect(self.lip.deleteLater)
+        
+        # QObject.moveToThread()
+        self.tts=tts
+        # self.communicate = Communicate(self)
+
+
         self.t = QTimer()
         self.t.timeout.connect(self.timer_thread)
         self.t.start(1000)
+
+        self.t = QTimer()
+        self.t.timeout.connect(self.repaint)
+        self.t.start(50)
 
         # x = QTimer()
         # x.thread = self.repaint
@@ -263,6 +351,7 @@ class MainWindow(QMainWindow):
     def timer_thread(self):
         self.top_bar.timer.decrement_time()
 
+    # lip sync stuff
 
 
     def paintEvent(self, e):
@@ -273,6 +362,9 @@ class MainWindow(QMainWindow):
 
         image = QImage("robot-3.png").scaled(450,450)
         painter.drawImage(QPointF(375, 200), image)
+
+        lip_img = QImage(self.lip.img_path)
+        painter.drawImage(QPointF(320, 200), lip_img)
 
         offset_x = clamp(self.x, 160, 1000) / 50 - 10
         offset_y = clamp(self.y, 140, 600) / 30 - 10
@@ -315,6 +407,10 @@ class MainWindow(QMainWindow):
 
         painter.end()
 
+    @Slot(name="repaint")
+    def update_repaint(self):
+        self.repaint()
+
     def keyPressEvent(self, e):
         if e.key() == Qt.Key.Key_M and self.active_path:
             self.top_bar.health.decrease_health(self.active_damage)
@@ -322,6 +418,14 @@ class MainWindow(QMainWindow):
             self.splats.append((self.x, self.y, self.active_damage))
             self.active_path = None
             self.active_damage = 0
+            self.repaint()
+        if e.key() == Qt.Key.Key_M:
+            self.tts.try_speak("testing")
+        if e.key() == Qt.Key.Key_Q:
+            self.lip.img_path = "lip_A.png"
+            self.repaint()
+        if e.key() == Qt.Key.Key_W:
+            self.lip.img_path = "lip_B.png"
             self.repaint()
             
 
