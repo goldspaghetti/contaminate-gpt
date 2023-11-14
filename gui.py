@@ -283,7 +283,7 @@ class MainWindow(QMainWindow):
 
         painter.setBrush(QColor(100, 200, 100, 80))
         for splat in self.splats:
-            painter.drawEllipse(QPointF(splat[0], splat[1]), splat[2], splat[2])
+            painter.drawEllipse(QPointF(splat[0], splat[1]), splat[2]*2, splat[2]*2)
 
         if self.active_path:
             image = QImage(self.active_path).scaled(100,100)
