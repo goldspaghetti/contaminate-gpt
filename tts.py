@@ -8,6 +8,11 @@ from config import *
 import torch
 import soundfile as sf
 from lipsync import Lipsync
+from PyQt6.QtMultimedia import *
+from PyQt6.QtCore import QUrl
+
+import sys
+from PyQt6.QtGui import QGuiApplication
 
 # openai.api_key = OPEN_AI_KEY
 class Sound():
@@ -34,30 +39,21 @@ class Sound():
         self.volume = volume
         self.lipsync = Lipsync()
         devices = sd.query_devices()
-        # print(devices)
+
         # self.audio_device = sd.default.device[1]
-        # print(self.audio_device)
-        # for device in devices:
-        #     # print(device["name"])
-        #     # print(device)
-        #     if device["name"] == "virtual audio cable": # change name
-        #         self.audio_device = device["index"]
-        #         sd.default.device = device["index"]
-        #         break
-        self.audio_device = sd.default.device[1]
-        self.music = sf.read("game_jam3.wav", dtype="float32")
-        sd.play(self.music[0]*self.volume, samplerate=44100, loop=True)
+        # self.music = sf.read("game_jam3.wav", dtype="float32")
+        # QMediaPlayer.
+        self.audio_device = QAudioOutput()
+        self.music = QMediaPlayer()
+        self.music.setAudioOutput(self.audio_device)
+        self.music.setSource(QUrl.fromLocalFile("game_jam3.wav"))
+        self.music.setLoops(-2)
+        self.music.play()
+        self.voice = QSoundEffect()
+        # sd.play(self.music[0]*self.volume, samplerate=44100, loop=True)
 
         fish_thread = threading.Thread(target=self.try_speak_loop, daemon=True)
         fish_thread.start()
-        # sd.default.device
-        # print(self.audio_device.name)
-        # self.audio_device = sd.query_devices("virtual audio cable") #change name to match actual device name!
-        # if self.audio_device:
-        #     self.audio_device = self.audio_device[0].name
-        # else:
-        #     self.audio_device = sd.default.device[1]
-        # self.audio_stream = sd.OutputStream(samplerate=22050, device=self.audio_device, channels=2, finished_callback=self.set_audio_false)
 
     def set_audio_false(self):
         self.curr_playing = False
@@ -126,16 +122,21 @@ class Sound():
         self.curr_playing = True
         self.tts.tts_to_file(text=prompt, file_path="speech.wav")
         # array = self.tts.tts(text=prompt, speaker=self.tts.speakers[17])
-        tts_speak = sf.read("speech.wav", dtype="float32")
+        # tts_speak = sf.read("speech.wav", dtype="float32")
         with open("text.txt", "w") as f:
             f.write(prompt)
         
         print(self.lipsync.get_features())
         # send info to change facial features
 
-        sd.play(tts_speak[0]*self.volume, 22050)
-        self.status = sd.wait()
-        sd.stop()
+        # sd.play(tts_speak[0]*self.volume, 22050)
+        self.voice.setSource(QUrl.fromLocalFile("speech.wav"))
+        print("before play")
+        self.voice.play()
+        while self.voice.isPlaying():
+            time.sleep(0.1)
+        print("played")
+
         self.last_speak = time.time()
         self.curr_playing = False
         # array = self.nightcore(array, 22050)
@@ -153,9 +154,26 @@ class Sound():
         # array = nightcore(array,22050)
 
 if __name__ == "__main__":
-    tts = Sound ()
-    # tts.try_speak("What do you think about Xjasdlkfjg")
-    # time.sleep(10)
-    # status = sd.wait()
-    # sd.stop()
-    tts.gpt("what do you think about xijiping")
+    app = QGuiApplication(sys.argv)
+    sound = Sound()
+    time.sleep(1)
+    sound.try_speak("hello there... HELLO")
+    print("sent hello!!!!!")
+    time.sleep(10)
+    print("sent hello 2 !!!!!!")
+    sound.try_speak("resignlob")
+    sound.try_speak("AAAA")
+    time.sleep(5)
+    sound.try_speak("testing")
+    time.sleep(6)
+    sound.try_speak("WHY")
+    app.exec()
+    # app = QGuiApplication(sys.argv)
+    # print("a")
+    # e =  QSoundEffect()
+    # e.setSource(QUrl.fromLocalFile("speech.wav"))
+    # e1 = QSoundEffect()
+    # e1.setSource(QUrl.fromLocalFile("game_jam3.wav"))
+    # e.play()
+    # e1.play()
+    # app.exec()
