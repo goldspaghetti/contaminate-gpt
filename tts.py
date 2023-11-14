@@ -59,14 +59,6 @@ class Sound():
         #     self.audio_device = sd.default.device[1]
         # self.audio_stream = sd.OutputStream(samplerate=22050, device=self.audio_device, channels=2, finished_callback=self.set_audio_false)
 
-    def audio_callback(self, outdata, frames, time, status):
-        print("AAA")
-        if TextToSpeech.curr_playing:
-            
-        # if self.curr_playing:
-            outdata[:] = TextToSpeech.audio
-            print(len(TextToSpeech.audio))
-
     def set_audio_false(self):
         self.curr_playing = False
 
@@ -74,20 +66,41 @@ class Sound():
         return pyrb.time_stretch(np.asarray(sample), sr, 2.0)
 
     def gpt(self, prompt):
-        completion = self.client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello!"}
-        ]
-        )
+        # try:
+        #     completion = self.client.chat.completions.create(
+        #         model="text-davinci-003",
+        #         messages=[
+        #             {"role": "system", "content": "You are a helpful assistant."},
+        #             {"role": "user", "content": "Hello!"}
+        #         ]
+        #     )
 
-        print(completion.choices[0].message)
-        # save to text.txt
-        with open("text.txt", "w") as f:
-            f.write(completion.choices[0].message)
+        #     with open("text.txt", "w") as f:
+        #         f.write(completion.choices[0].message)
 
-        return completion.choices[0].text
+        #     return completion.choices[0].text
+        # except openai.RateLimitError as e:
+        #     print(f"Rate limit error: {e}")
+        #     print("You may have exceeded your API usage quota. Check your OpenAI dashboard for details.")
+        #     return None
+        # except Exception as e:
+        #     print(f"Error during GPT API request: {e}")
+        #     return None
+
+            completion = self.client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a robot on a screen. The player is throwing contaminated objects at you. You are very angry and hate the player, often using strong language to express your emotions. Keep your responses short."},
+                {"role": "user", "content": prompt}
+            ]
+            )
+
+            print(completion.choices[0].message.content)
+            # save to text.txt
+            with open("text.txt", "w") as f:
+                f.write(completion.choices[0].message.content)
+
+            return completion.choices[0].message.content
 
     def try_speak(self, prompt):
         self.speak_queue.put(prompt)
@@ -117,11 +130,11 @@ class Sound():
         with open("text.txt", "w") as f:
             f.write(prompt)
         
-        self.lipsync.get_features()
+        print(self.lipsync.get_features())
         # send info to change facial features
 
         sd.play(tts_speak[0]*self.volume, 22050)
-        tatus = sd.wait()
+        self.status = sd.wait()
         sd.stop()
         self.last_speak = time.time()
         self.curr_playing = False
@@ -141,16 +154,8 @@ class Sound():
 
 if __name__ == "__main__":
     tts = Sound ()
-    # thread = threading.Thread(target=tts.try_fishspeak, daemon=True)
-    # thread.start()
-    time.sleep(1)
-    # tts.speak_queue.put(tts.gpt("can you laugh?"))
-    time.sleep(6)
-    # tts.speak_queue.put(tts.gpt("What do you think about Xi Jinping"))
-    tts.try_speak("What do you think about Xi Jinping")
-    # tts.fishspeak("Can you laugh?")
-    # tts.fishspeak("Can you laugh?")
-    time.sleep(5)
-    # sd.play(tts.tts(text="Check the manual build section if you wish to compile the bindings from source to enable additional modules such as CUDA.", speaker=tts.speakers[3]), 22050)
-    status = sd.wait()
-    sd.stop()
+    # tts.try_speak("What do you think about Xjasdlkfjg")
+    # time.sleep(10)
+    # status = sd.wait()
+    # sd.stop()
+    tts.gpt("what do you think about xijiping")
