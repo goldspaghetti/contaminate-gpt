@@ -1,2 +1,8 @@
 PyQt6==6.5.2
 craiyon.py==1.1.0
+openai
+sounddevice
+TTS
+soundfile
+torch
+pyrubberband

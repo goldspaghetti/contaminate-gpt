@@ -46,7 +46,7 @@ class Sound():
         #         break
         self.audio_device = sd.default.device[1]
         self.music = sf.read("game_jam3.wav", dtype="float32")
-        # sd.play(self.music[0]*self.volume, samplerate=44100, loop=True)
+        sd.play(self.music[0]*self.volume, samplerate=44100, loop=True)
 
         fish_thread = threading.Thread(target=self.try_speak_loop, daemon=True)
         fish_thread.start()
