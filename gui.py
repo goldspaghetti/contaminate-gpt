@@ -9,6 +9,7 @@ from PyQt6.QtCore import *
 from functools import partial
 from random import randint
 import time
+import openai
 
 import threading
 import os
@@ -22,8 +23,8 @@ class Timer(QLabel):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.min = 3
-        self.sec = 0
+        self.min = 0
+        self.sec = 10
 
         self.setStyleSheet("""
             QWidget {
@@ -184,60 +185,29 @@ class SideBar(QWidget):
         if self.parent.active_path:
             return
 
-        # self.parent.current_image = item.path
         self.parent.active_path = item.path
         self.parent.active_damage = item.damage
-        # print(self.parent.current_image)
-        # x = QPushButton()
         item.setVisible(False)
 
         self.parent.repaint()
-        # print(c.icon().pixmap(c.icon().availableSizes()[0]).toImage().text("FilePath"))
-        # self.parent 
 
-# class FireButton(QPushButton):
-#     def __init__(self):
-#         super().__init__("FIRE")
-#         self.setFixedSize(50,50)
-#         self.setStyleSheet("background: red")
-#         # self.move(800, 500)
-#         # self.setVisible(True)
+        self.parent.targets = [
+            (randint(260, 900), randint(240, 500)),
+            (randint(260, 900), randint(240, 500)),
+            (randint(260, 900), randint(240, 500))
+        ]
 
-# class Communicate(QObject):
-#     speak = Signal(name="repaint")
-#     def __init__(self, parent=None):
-#         super().__init__()
-#         self.speak.connect(self.refresh)
-#         self.parent=parent
-    
-#     @Slot()
-#     def refresh(self):
-#         self.parent.refresh()
 
 class Lip():
     def __init__(self, event_queue=None):
         super().__init__()
-        # self.load("lip_x.png")
         self.event_queue = event_queue
         self.curr_event = None
         self.last_time = 0
         lip_thread = threading.Thread(target=self.thread_loop, daemon=True)
-        # lip_thread = QThread(target=self.thread_loop, daemon=True)
         lip_thread.start()
         self.last_face = "N"
-        # self.img = QImage("lip_X.png")
         self.img_path = "lip_X.png"
-        # repaint_signal = Signal(name="repaint")
-
-        # self.a = QBitmap("lip_A.png")
-        # self.b = QBitmap("lip_B.png")
-        # self.c = QBitmap("lip_C.png")
-        # self.d = QBitmap("lip_D.png")
-        # self.e = QBitmap("lip_E.png")
-        # self.f = QBitmap("lip_F.png")
-        # self.g = QBitmap("lip_G.png")
-        # self.h = QBitmap("lip_H.png")
-        # self.x = QBitmap("lip_x.png")
 
     
     def thread_loop(self):
@@ -260,10 +230,6 @@ class Lip():
                 print(f"change image to {curr_face}, last face {self.last_face}, {curr_face == self.last_face} time: {time.time()-self.last_time}")
                 self.img_path = f"lip_{curr_face}.png"
                 self.last_face = curr_face
-                # self.main_window.repaint()
-                # self.repaint_signal
-                # Communicate.speak.emit()
-                # self.repaint_signal.emit()
 
     def check_event(self):
         if not self.event_queue.empty():
@@ -284,36 +250,31 @@ class MainWindow(QMainWindow):
             }
         """)
 
+        self.game_over = False
+        self.shield = None
         self.active_path = None
         self.active_damage = 0
+        self.targets = []
         self.splats = []
 
         self.x = 1000
         self.y = 1000
 
-        # self.current_image = None
-
         self.top_bar = TopBar()
         self.side_bar = SideBar(self)
-        # self.fire = FireButton()
 
         self.bottom_half = QWidget()
         self.bottom_half.layout = QHBoxLayout()
         self.bottom_half.layout.addWidget(self.side_bar)
-        # self.bottom_half.layout.addWidget(self.fire)
         self.bottom_half.layout.addStretch()
         self.bottom_half.layout.setContentsMargins(0,0,0,0)
         self.bottom_half.setLayout(self.bottom_half.layout)
-        # self.bottom_bar = BottomBar()
-        # self.bottom_bar.move(100, 10)
 
         # central widget
         self.frame = QWidget()
-        # self.frame.setStyleSheet("background: rgb(40,40,40)")
         self.frame.layout = QVBoxLayout()
 
         self.frame.layout.addWidget(self.top_bar)
-        # self.frame.layout.addStretch()
         self.frame.layout.addWidget(self.bottom_half, 1)
 
         self.frame.layout.setContentsMargins(0,0,0,0)
@@ -322,35 +283,21 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.frame)
 
         self.lip = Lip(lip_queue)
-        # self.lip_thread = QThread()
-        # self.lip.moveToThread(self.lip_thread)
-        # self.lip_thread.finished.connect(self.lip.deleteLater)
-        
-        # QObject.moveToThread()
         self.tts=tts
-        # self.communicate = Communicate(self)
 
 
         self.t = QTimer()
         self.t.timeout.connect(self.timer_thread)
         self.t.start(1000)
 
-        self.t = QTimer()
-        self.t.timeout.connect(self.repaint)
-        self.t.start(50)
-
-        # x = QTimer()
-        # x.thread = self.repaint
-        # x.start(100)
-        # import time
-        # while True:
-        #     self.repaint()
-        #     time.sleep(0.1)
-
-    # def __calc_rect_from_center(x, y, w, h):
-    #     retu
+        self.t2 = QTimer()
+        self.t2.timeout.connect(self.repaint)
+        self.t2.start(50)
 
     def timer_thread(self):
+        if self.top_bar.timer.min == 0 and self.top_bar.timer.sec == 0:
+            self.game_over = "Ran out of time!"
+        
         self.top_bar.timer.decrement_time()
 
     # lip sync stuff
@@ -365,19 +312,41 @@ class MainWindow(QMainWindow):
         image = QImage("robot-3.png").scaled(450,450)
         painter.drawImage(QPointF(375, 200), image)
 
-        lip_img = QImage(self.lip.img_path)
-        painter.drawImage(QPointF(320, 200), lip_img)
+        lip_img = QImage(self.lip.img_path).scaled(100,100)
+        painter.drawImage(QPointF(550, 375), lip_img)
 
         offset_x = clamp(self.x, 160, 1000) / 50 - 10
         offset_y = clamp(self.y, 140, 600) / 30 - 10
 
-        painter.setBrush(QColor("lightgray"))
+        painter.setBrush(QColor("red"))
         painter.drawEllipse(QPointF(550+offset_x, 310+offset_y), 20, 20)
         painter.drawEllipse(QPointF(650+offset_x, 310+offset_y), 20, 20)
 
+        painter.setBrush(QColor(100,100,200,60))
+        if self.shield and time.time() - self.shield < 20:
+            painter.drawEllipse(QPointF(640, 300), 300, 300)
+        else:
+            self.shield = None
+
+        painter.setBrush(QColor(255,100,100))
+        targets = []
+        for info in self.targets:
+            rect = QRect(info[0], info[1], 20,20)
+            painter.drawRect(rect)
+            targets.append((rect, info))
+
         painter.setBrush(QColor(100, 200, 100, 80))
         for splat in self.splats:
-            painter.drawEllipse(QPointF(splat[0], splat[1]), splat[2]*2, splat[2]*2)
+            rect = QRect(splat[0], splat[1], randint(30,50), randint(30,50))
+            painter.drawRect(rect)
+
+            for rect2, info in targets:
+                if rect.intersects(rect2):
+                    self.targets.remove(info)
+                    painter.end()
+                    self.repaint()
+                    return
+            # painter.drawEllipse(QPointF(splat[0], splat[1]), splat[2]*2, splat[2]*2)
 
         if self.active_path:
             image = QImage(self.active_path).scaled(100,100)
@@ -407,28 +376,86 @@ class MainWindow(QMainWindow):
         image = QImage("cannon.png").scaled(200,200)
         painter.drawImage(QPointF(900, 500), image)
 
+        if self.game_over:
+
+            # painter = QPainter(self)
+            painter.setBrush(QColor(0, 0, 0, 80))
+            painter.drawRect(400, 300, 300, 100)
+            painter.setPen(QPen(QColor(255, 255, 255)))
+            painter.drawText(QPointF(500, 350), self.game_over)
+            painter.end()
+
+            # painter.setBrush(QColor(0,0,0,50))
+            # painter.drawRect(400, 300, 300, 100)
+            # painter.drawText(QPointF(500, 400), self.game_over)
+            self.t.stop()
+            self.t2.stop()
+            return
+
+            # while True:
+            #     time.sleep(1)
+
         painter.end()
 
     # @Slot(name="repaint")
     # def update_repaint(self):
     #     self.repaint()
 
+    def voice_thread(self):
+        to_send = f"i threw a {' '.join(self.active_path[7:-4].split('_'))} to you, dealing {self.active_damage}%. you previously had {self.top_bar.health.value()}/100% health"
+        print("sending: "+to_send)
+        resp = self.tts.gpt(to_send)
+        self.tts.try_speak(resp)
+
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key.Key_M and self.active_path:
-            self.top_bar.health.decrease_health(self.active_damage)
+        if e.key() == Qt.Key.Key_M and self.active_path and not self.shield:
+            # try:
+            #     t = threading.Thread(target=self.voice_thread, daemon=True)
+            #     t.start()
+
+            # except openai.RateLimitError as e:
+            #     self.tts.try_speak("you have to wait")
+            #     return
+            
+            # self.top_bar.health.decrease_health(self.active_damage)
 
             self.splats.append((self.x, self.y, self.active_damage))
-            self.active_path = None
-            self.active_damage = 0
+            # time.sleep(1)
+            # resp = "hello thereaksdlfjlkasfjlkdafj ksdfk"
+
             self.repaint()
-        if e.key() == Qt.Key.Key_M:
-            self.tts.try_speak("testing")
-        if e.key() == Qt.Key.Key_Q:
-            self.lip.img_path = "lip_A.png"
+
+            if len(self.targets) == 0:
+                if self.top_bar.health.value() - self.active_damage <= 0:
+                    self.top_bar.health.setValue(0)
+                    self.game_over = "It's dead!"
+                    return
+                self.top_bar.health.decrease_health(self.active_damage)
+
+                try:
+                    t = threading.Thread(target=self.voice_thread, daemon=True)
+                    t.start()
+                except openai.RateLimitError as e:
+                    # self.tts.try_speak("you have to wait")
+                    return
+                
+                self.shield = time.time()
+                self.active_path = None
+                self.active_damage = 0
+
             self.repaint()
-        if e.key() == Qt.Key.Key_W:
-            self.lip.img_path = "lip_B.png"
-            self.repaint()
+        # if e.key() == Qt.Key.Key_M:
+        #     # self.tts.try_speak("testing")
+        #         resp = self.tts.gpt("i threw a moldy cheese to you, dealing 20%")
+        #         # time.sleep(1)
+        #         # resp = "hello thereaksdlfjlkasfjlkdafj ksdfk"
+        #         self.tts.try_speak(resp)
+        # if e.key() == Qt.Key.Key_Q:
+        #     self.lip.img_path = "lip_A.png"
+        #     self.repaint()
+        # if e.key() == Qt.Key.Key_W:
+        #     self.lip.img_path = "lip_B.png"
+        #     self.repaint()
             
 
     # def mouse
