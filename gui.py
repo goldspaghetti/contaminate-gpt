@@ -433,7 +433,7 @@ class MainWindow(QMainWindow):
             # time.sleep(1)
             # resp = "hello thereaksdlfjlkasfjlkdafj ksdfk"
 
-            # self.repaint()
+            self.repaint()
 
             if len(self.targets) == 0:
                 if self.top_bar.health.value() - self.active_damage <= 0:
@@ -446,9 +446,9 @@ class MainWindow(QMainWindow):
                     t = threading.Thread(target=self.voice_thread, daemon=True)
                     t.start()
                 except openai.RateLimitError as e:
-                    # self.tts.try_speak("you have to wait")
-                    # return
-                    pass
+                    self.tts.try_speak("you have to wait")
+                    return
+                    # pass
                 
                 self.shield = time.time()
                 self.active_path = None

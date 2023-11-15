@@ -57,7 +57,7 @@ class Sound():
         mixer.init()
         mixer.music.load("game_jam3.wav")
         mixer.music.play(loops=-1)
-        mixer.music.set_volume(0.5)
+        mixer.music.set_volume(0.25)
 
         # sd.play(self.music[0]*self.volume, samplerate=44100, loop=True)
 
@@ -95,7 +95,7 @@ class Sound():
             completion = self.client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a robot on a screen. The player is throwing contaminated objects at you. You are very angry and hate the player, often using joking language to express your emotions. NO SWEARING. You also often threaten the player. You must refer directly to the objects the player throws at you in your response. Keep your responses SHORT (a sentence). NO SWEARING!"},
+                {"role": "system", "content": "You are a robot on a screen. The player is throwing contaminated objects at you. You are very angry and hate the player, often using joking language to express your emotions but very angry. NO SWEARING. You also often threaten the player. You *MUST* refer directly to the objects the player throws at you in your response. Keep your responses SHORT (a sentence). NO SWEARING!"},
                 {"role": "user", "content": prompt}
             ]
             )
@@ -135,8 +135,9 @@ class Sound():
         with open("text.txt", "w") as f:
             f.write(prompt)
         
-        print(self.lipsync.get_features())
-        self.lip_queue.put(self.lipsync.get_features())
+        # print(self.lipsync.get_features())
+        features = self.lipsync.get_features()
+        self.lip_queue.put(features)
         # send info to change facial features
 
         # sd.play(tts_speak[0]*self.volume, 22050)
@@ -149,7 +150,7 @@ class Sound():
 
         voice = mixer.Sound("speech.wav")
         voice.play()
-        time.sleep(0)
+        # time.sleep(0)
         self.last_speak = time.time()
         self.curr_playing = False
         # array = self.nightcore(array, 22050)
