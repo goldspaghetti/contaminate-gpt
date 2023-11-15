@@ -23,8 +23,8 @@ class Timer(QLabel):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.min = 5
-        self.sec = 10
+        self.min = 3
+        self.sec = 0
 
         self.setStyleSheet("""
             QWidget {
