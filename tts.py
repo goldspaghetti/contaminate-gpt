@@ -57,6 +57,7 @@ class Sound():
         mixer.init()
         mixer.music.load("game_jam3.wav")
         mixer.music.play(loops=-1)
+        mixer.music.set_volume(0.5)
 
         # sd.play(self.music[0]*self.volume, samplerate=44100, loop=True)
 
@@ -94,7 +95,7 @@ class Sound():
             completion = self.client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a robot on a screen. The player is throwing contaminated objects at you. You are very angry and hate the player, often using strong language to express your emotions. NO SWEARING. You also often threaten the player. You must refer directly to the objects the player throws at you in your response. Keep your responses SHORT (a sentence). NO SWEARING!"},
+                {"role": "system", "content": "You are a robot on a screen. The player is throwing contaminated objects at you. You are very angry and hate the player, often using joking language to express your emotions. NO SWEARING. You also often threaten the player. You must refer directly to the objects the player throws at you in your response. Keep your responses SHORT (a sentence). NO SWEARING!"},
                 {"role": "user", "content": prompt}
             ]
             )

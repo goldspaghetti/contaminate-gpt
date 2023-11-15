@@ -410,7 +410,7 @@ class MainWindow(QMainWindow):
     #     self.repaint()
 
     def voice_thread(self):
-        to_send = f"i threw a {' '.join(self.active_path[7:-4].split('_'))} to you, dealing {self.active_damage}%. you previously had {self.top_bar.health.value()}/100% health"
+        to_send = f"i threw a {' '.join(self.active_path[7:-4].split('_'))} to you, dealing {self.active_damage}%. you now have {self.top_bar.health.value()}/100% health"
         print("sending: "+to_send)
         resp = self.tts.gpt(to_send)
         self.tts.try_speak(resp)
@@ -428,10 +428,12 @@ class MainWindow(QMainWindow):
             # self.top_bar.health.decrease_health(self.active_damage)
 
             self.splats.append((self.x, self.y, self.active_damage))
+            # for _ in range(20):
+            #     self.top_bar.timer.decrement_time()
             # time.sleep(1)
             # resp = "hello thereaksdlfjlkasfjlkdafj ksdfk"
 
-            self.repaint()
+            # self.repaint()
 
             if len(self.targets) == 0:
                 if self.top_bar.health.value() - self.active_damage <= 0:
@@ -445,7 +447,8 @@ class MainWindow(QMainWindow):
                     t.start()
                 except openai.RateLimitError as e:
                     # self.tts.try_speak("you have to wait")
-                    return
+                    # return
+                    pass
                 
                 self.shield = time.time()
                 self.active_path = None
