@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHB
 from PyQt6.QtGui import QIcon, QPainter, QColor, QPixmap, QPen, QBrush, QLinearGradient, QImage, QPainterPath, QBitmap
 # from PyQt6.QtCore import Qt, QSize, QRect, QPointF, QRectF, QEvent, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtCore import *
-from PySide6.QtCore import Signal, Slot, QObject, QThread
+# from PySide6.QtCore import Signal, Slot, QObject, QThread
 
 from functools import partial
 from random import randint
@@ -227,7 +227,7 @@ class Lip():
         self.last_face = "N"
         # self.img = QImage("lip_X.png")
         self.img_path = "lip_X.png"
-        repaint_signal = Signal(name="repaint")
+        # repaint_signal = Signal(name="repaint")
 
         # self.a = QBitmap("lip_A.png")
         # self.b = QBitmap("lip_B.png")
@@ -409,9 +409,9 @@ class MainWindow(QMainWindow):
 
         painter.end()
 
-    @Slot(name="repaint")
-    def update_repaint(self):
-        self.repaint()
+    # @Slot(name="repaint")
+    # def update_repaint(self):
+    #     self.repaint()
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key.Key_M and self.active_path:
