@@ -23,7 +23,7 @@ class Timer(QLabel):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.min = 0
+        self.min = 5
         self.sec = 10
 
         self.setStyleSheet("""
@@ -307,6 +307,28 @@ class MainWindow(QMainWindow):
         painter = QPainter()
         painter.begin(self)
 
+        if self.game_over:
+
+            # painter = QPainter(self)
+            painter.setBrush(QColor(0, 0, 0, 80))
+            painter.drawRect(400, 300, 300, 100)
+            painter.setPen(QPen(QColor(255, 255, 255)))
+            painter.drawText(QPointF(500, 350), self.game_over)
+
+            painter.end()
+
+            self.t.stop()
+            self.t2.stop()
+
+            self.side_bar.setVisible(False)
+
+            # painter.setBrush(QColor(0,0,0,50))
+            # painter.drawRect(400, 300, 300, 100)
+            # painter.drawText(QPointF(500, 400), self.game_over)
+            # self.t.stop()
+            # self.t2.stop()
+            return
+        
         painter.setPen(Qt.PenStyle.NoPen)
 
         image = QImage("robot-3.png").scaled(450,450)
@@ -324,7 +346,7 @@ class MainWindow(QMainWindow):
 
         painter.setBrush(QColor(100,100,200,60))
         if self.shield and time.time() - self.shield < 20:
-            painter.drawEllipse(QPointF(640, 300), 300, 300)
+            painter.drawEllipse(QPointF(620, 300), 300, 300)
         else:
             self.shield = None
 
@@ -376,21 +398,7 @@ class MainWindow(QMainWindow):
         image = QImage("cannon.png").scaled(200,200)
         painter.drawImage(QPointF(900, 500), image)
 
-        if self.game_over:
 
-            # painter = QPainter(self)
-            painter.setBrush(QColor(0, 0, 0, 80))
-            painter.drawRect(400, 300, 300, 100)
-            painter.setPen(QPen(QColor(255, 255, 255)))
-            painter.drawText(QPointF(500, 350), self.game_over)
-            painter.end()
-
-            # painter.setBrush(QColor(0,0,0,50))
-            # painter.drawRect(400, 300, 300, 100)
-            # painter.drawText(QPointF(500, 400), self.game_over)
-            self.t.stop()
-            self.t2.stop()
-            return
 
             # while True:
             #     time.sleep(1)
